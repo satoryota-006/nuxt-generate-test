@@ -1,3 +1,5 @@
+import axios from 'axios';
+
 export default {
   // Target: https://go.nuxtjs.dev/config-target
   target: 'static',
@@ -15,10 +17,6 @@ export default {
       { name: 'format-detection', content: 'telephone=no' },
     ],
     link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
-  },
-
-  generate:{
-    interval: 100,
   },
 
   // Global CSS: https://go.nuxtjs.dev/config-css
@@ -41,7 +39,34 @@ export default {
   // Axios module configuration: https://go.nuxtjs.dev/config-axios
   axios: {
     // Workaround to avoid enforcing hard-coded localhost:3000: https://github.com/nuxt-community/axios-module/issues/308
-    baseURL: '/'
+    baseURL: 'http://localhost:3000/'
+  },
+
+  generate:{
+    interval: 100,
+    async routes(){
+      const posts = (await axios.get('https://qiita.com/api/v2/items?page=1&per_page=100',
+         {
+           headers: {
+             Authorization: `Bearer ${process.env.QIITA_TOKEN}`,
+           }
+         })
+       ).data
+ 
+       const postRoutes = posts.map(post=>{
+         return{
+           route:`/post/${post.id}`,
+           payload:post
+         }
+       })
+       return [
+         {
+           route:"/post",
+           payload: posts
+         },
+         ...postRoutes
+       ]
+     }
   },
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
