@@ -1,5 +1,5 @@
 import axios from 'axios';
-
+import { createClient } from 'microcms-js-sdk'
 export default {
   // Target: https://go.nuxtjs.dev/config-target
   target: 'static',
@@ -45,28 +45,77 @@ export default {
   generate:{
     interval: 100,
     async routes(){
-      const posts = (await axios.get('https://qiita.com/api/v2/items?page=1&per_page=100',
-         {
-           headers: {
-             Authorization: `Bearer ${process.env.QIITA_TOKEN}`,
-           }
-         })
-       ).data
- 
-       const postRoutes = posts.map(post=>{
-         return{
-           route:`/post/${post.id}`,
-           payload:post
-         }
-       })
-       return [
-         {
-           route:"/post",
-           payload: posts
-         },
-         ...postRoutes
-       ]
-     }
+      const microcms = createClient({
+        serviceDomain: process.env.MICROCMS_DOMAIN,
+        apiKey: process.env.MICROCMS_API_KEY
+      })
+      const fields = [
+        'studio_id',
+        'rooms.id',
+        'banner.boolean',
+        'banner.image.url',
+        'banner.alt',
+        'notice.boolean',
+        'notice.body',
+        'images',
+        'map'
+      ]
+      const getTotalCount = await 
+        microcms.get({
+          endpoint: process.env.END_POINT,
+          queries: {
+            limit: 0
+          }
+        })
+        .then((response) => {
+          return response.totalCount
+        })
+      const getShopsRoutes = await 
+        microcms.get({
+          endpoint: process.env.END_POINT,
+          queries: {
+            limit: getTotalCount,
+            fields: fields.join(',')
+          }
+        })
+        .then((shops) => {
+          const routes = []
+          shops.contents.forEach(shop => {
+            routes.push(
+              {
+                route: `/shoplist/shop/${shop.studio_id}`,
+                payload: shop
+              }
+            )
+          })
+          return routes
+        })
+      const getShops = await 
+        microcms.get({
+          endpoint: process.env.END_POINT,
+          queries: {
+            limit: getTotalCount,
+            fields: fields.join(',')
+          }
+        })
+        .then((shops) => {
+          return shops.contents
+        })
+      return [
+        {
+          route:"/shoplist/shop",
+          payload: getShops
+        }
+      ].concat(getShopsRoutes)
+    }
+  },
+
+  microcms: {
+    options: {
+      serviceDomain: process.env.MICROCMS_DOMAIN,
+      apiKey: process.env.MICROCMS_API_KEY
+    },
+    mode: process.env.NODE_ENV === 'production' ? 'client' : 'all'
   },
 
   // Build Configuration: https://go.nuxtjs.dev/config-build
