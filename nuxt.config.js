@@ -1,8 +1,12 @@
-import axios from 'axios';
+// import axios from 'axios';
 import { createClient } from 'microcms-js-sdk'
 export default {
   // Target: https://go.nuxtjs.dev/config-target
   target: 'static',
+
+  router: {
+    base: '/generate-test2/',
+  },
 
   // Global page headers: https://go.nuxtjs.dev/config-head
   head: {
@@ -79,7 +83,17 @@ export default {
           }
         })
         .then((shops) => {
+          // let expansionShops = []
+          // for (let i = 0; i < 9; i++) {
+          //   const cloneShops = JSON.parse(JSON.stringify(shops.contents))
+          //   cloneShops.map((shop) => {
+          //     shop.studio_id += '_' + i
+          //     return shop
+          //   })
+          //   expansionShops = expansionShops.concat(cloneShops)
+          // }
           const routes = []
+          // expansionShops.forEach(shop => {
           shops.contents.forEach(shop => {
             routes.push(
               {
